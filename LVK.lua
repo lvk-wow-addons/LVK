@@ -142,6 +142,25 @@ function LVK:Delay(fn, amount)
     end, amount)
 end
 
+function LVK:SplitLines(text)
+    local lines = {}
+    for line in text:gmatch("[^\r\n]+") do
+        table.insert(lines, line)
+    end
+    return lines
+end
+
+function LVK:AssembleLines(lines)
+    local result = ""
+    for k, v in ipairs(lines) do
+        if result ~= "" then
+            result = result .. "\n"
+        end
+        result = result .. v
+    end
+    return result
+end
+
 function LVK:Test()
     AutoMacros:InventoryChanged()
 end
