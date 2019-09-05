@@ -1,0 +1,8 @@
+## Interface: 11302
+## Title: LVK
+## Notes: 
+## Author: Lasse Vågsæther Karlsen
+## Version: 0.10.0
+## DefaultState: Enabled
+LVK.lua
+LVK_Frame.lua
