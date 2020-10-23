@@ -1,10 +1,15 @@
 LVK = {}
-LVK["_colors"] = {
-    ["r"] = "|cFFFF4040",
-    ["g"] = "|cFF40FF40",
-    ["b"] = "|cFF4040FF",
+LVK["ColorCodes"] = {
+    ["r"] = "|cFFFF0000",
+    ["R"] = "|cFFFF8080",
+    ["g"] = "|cFF00FF00",
+    ["G"] = "|cFF80FF80",
+    ["b"] = "|cFF0000FF",
+    ["B"] = "|cFF8080FF",
     ["w"] = "|cFFFFFFFF",
-    ["y"] = "|cFFFFFF40",
+    ["W"] = "|cFFFFFFFF",
+    ["y"] = "|cFFFFFF00",
+    ["Y"] = "|cFFFFFF80",
     ["<"] = "|r"
 }
 
@@ -13,37 +18,56 @@ LVK["_timerValue"] = 0
 LVK["_timerId"] = 0
 
 function LVK:Debug(message)
-    -- self:Print("|ydebug: " .. message)
+    -- self:Print("|y|debug: " .. message)
 end
 
 function LVK:Error(message)
-    self:Print("|rError: " .. message)
+    self:Print("|r|Error: " .. message)
 end
 
-function LVK:Print(message)
+function LVK:Colorize(msg, ...)
+    if msg == nil then
+        return "<nil>"
+    end
     local result = ""
+    local i = 1
+    local oldI = 0
+    while i <= #msg do
+        if oldI == i then
+            break
+        end
+        oldI = i
 
-    local index = 1
-    while index <= #message do
-        local c = message:sub(index, index)
-        index = index + 1
+        local c = msg:sub(i, i)
 
-        if c == '|' then
-            c = message:sub(index, index)
-            index = index + 1
+        if c == "|" then
+            local code = ""
 
-            local replacement = self._colors[c]
-            if replacement then
-                result = result .. replacement
-            else
-                result = result .. "|" .. c .. "?"
+            while i < #msg do
+                i = i + 1
+                c = msg:sub(i, i)
+                if c == "|" then
+                    i = i + 1
+                    break
+                end
+                code = code .. c
             end
+            result = result .. (LVK.ColorCodes[code] or ("|" .. code .. "|"))
         else
             result = result .. c
+            i = i + 1
         end
     end
 
-    DEFAULT_CHAT_FRAME:AddMessage(result)
+    if #{...} > 0 then
+        result = string.format(result, ...)
+    end
+    return result
+end
+
+
+function LVK:Print(message, ...)
+    DEFAULT_CHAT_FRAME:AddMessage(self:Colorize(message, ...))
 end
 
 function LVK:GetItemLink(item)
@@ -58,13 +82,237 @@ function LVK:GetItemId(item)
 end
 
 function LVK:AnnounceAddon(addonId)
-    self:Print("[|y" .. addonId .. "|<] v|g" .. GetAddOnMetadata(addonId, "version") .. "|< loaded")
+    self:Print("[|y|" .. addonId .. "|<|] v|g|" .. GetAddOnMetadata(addonId, "version") .. "|<| loaded")
 end
 
 function LVK:PreMacro()
     self:Debug("PreMacro")
     UIErrorsFrame:Hide()
     SetCVar("Sound_EnableErrorSpeech", 0)
+end
+
+function LVK:FormatString(str)
+    local output = ""
+    for i = 1, #str do
+        local c = str:sub(i, i)
+        if c == "\"" then
+            output = output .. "\\" .. c
+        elseif c == "\n" then
+            output = output .. "\\n"
+        elseif c == "\r" then
+            output = output .. "\\r"
+        elseif c == "\\" then
+            output = output .. "\\\\"
+        elseif c == "\a" then
+            output = output .. "\\a"
+        elseif c == "\b" then
+            output = output .. "\\b"
+        elseif c == "\f" then
+            output = output .. "\\f"
+        elseif c == "\t" then
+            output = output .. "\\t"
+        elseif c == "\v" then
+            output = output .. "\\v"
+        elseif c == '|' then
+            output = output .. "||"
+        else
+            output = output .. c
+        end
+    end
+    return "\"" .. output .. "\""
+end
+
+function LVK:DebugDump(obj, name)
+    -- self:Dump(obj, self:Colorize("|y|DEBUG: |<|" .. (name or "value")))
+end
+
+function LVK:GetItemString(itemLink)
+    return string.match(itemLink, "item[%-?%d:]+")
+end
+
+function LVK:SplitSlash(str)
+    local result = { }
+
+    local quote = " "
+
+    local i = 1
+    local oldI = 0
+    local current = ""
+    while i <= #str do
+        if oldI == i then
+            self:DebugPrint("SplitSlash terminated early, did not advance from position %d in %s", i, self:FormatString(str))
+            break
+        end
+        oldI = i
+
+        local c = str:sub(i, i)
+        if quote ~= " " then
+            if c == quote then
+                quote = " "
+                i = i + 1
+            else
+                current = current .. c
+                i = i + 1
+            end
+        else
+            if c == "\"" or c == "\'" then
+                quote = c
+                i = i + 1
+            elseif c == " " then
+                if current ~= "" then
+                    table.insert(result, current)
+                    current = ""
+                end
+                i = i + 1
+            else
+                current = current .. c
+                i = i + 1
+            end
+        end
+    end
+    if current ~= "" then
+        table.insert(result, current)
+    end
+
+    self:Dump(result, "before")
+    local index = 1
+    while index < #result do
+        if string.find(result[index], "|Hitem:") ~= nil then
+            local itemLink = result[index]
+            index = index + 1
+            while index < #result do
+                itemLink = itemLink .. " " .. result[index]
+                table.remove(result, index)
+
+                if string.find(itemLink, "|h|r") then
+                    break
+                end
+            end
+            result[index - 1] = itemLink
+        else
+            index = index + 1
+        end
+    end
+    self:Dump(result, "after")
+    return result
+end
+
+function LVK:ExecuteSlash(str, frame)
+    local parts = self:SplitSlash(str)
+
+    if #parts >= 1 then
+        local name = string.upper(parts[1]):sub(1, 1) .. string.lower(parts[1]:sub(2, #parts[1]))
+        local functionName = "Slash_" .. name
+
+        local exceptFirst = {unpack(parts)}
+        table.remove(exceptFirst, 1)
+    
+        if frame[functionName] then
+            frame[functionName](frame, exceptFirst)
+            return true
+        end
+
+        if frame["Slash_Default"] then
+            frame["Slash_Default"](frame, exceptFirst)
+            return true
+        end
+
+        if frame["Slash_Help"] then
+            self:Print("|r|Invalid command: |<| '|y|%s|<|', use '|y|help|<|' command for help on syntax and usage", str)
+        end
+
+        return false
+    end
+end
+
+function LVK:ShowHelp(tbl, key)
+    local help = tbl[key]
+    if not help then
+        self:Error("No help key '|y|%s|<|'", key)
+        return
+    end
+
+    if type(help) == "table" then
+        for _, v in ipairs(help) do
+            self:Print(v)
+        end
+    else
+        self:Print(help)
+    end
+end
+
+function LVK:Dump(obj, name)
+    local already = {}
+
+    local toString = function(value)
+        if (type(value) == string) then
+            return self:FormatString(value)
+        else
+            return tostring(value)
+        end
+    end
+
+    local dump
+
+    local dumpers = {
+        ["string"] = function(prefix, str, indent)
+            self:Print("%s = %s", prefix, self:FormatString(str))
+        end,
+        ["number"] = function(prefix, num, indent)
+            if num == math.floor(num) then
+                self:Print("%s = %d (0x%x)", prefix, num, num)
+            else
+                self:Print("%s = %f", prefix, num)
+            end
+        end,
+        ["table"] = function(prefix, tbl, indent)
+            if already[tbl] then
+                self:Print("%s = %s (already dumped)", prefix, toString(tbl))
+                return
+            end
+            already[obj] = true
+
+            self:Print("%s = %s", prefix, toString(tbl))
+            self:Print("%s{", indent:sub(1, #indent - 2))
+            local any = false
+            for key, value in pairs(tbl) do
+                dump(value, toString(key), indent .. "  ")
+                any = true
+            end
+            if not any then
+                for key, value in ipairs(tbl) do
+                    dump(value, toString(key), indent .. "  ")
+                end
+            end
+            self:Print("%s}", indent:sub(1, #indent - 2))
+        end,
+    }
+
+    dump = function(obj, name, indent)
+        if type(name) ~= "string" then
+            name = tostring(name)
+        end
+        local prefix = string.format("%s%s: %s", indent, name, type(obj))
+
+        if obj == nil then
+            self:Print("%s = nil", prefix)
+            return
+        end
+
+        dumper = dumpers[type(obj)]
+        if dumper ~= nil then
+            dumper(prefix, obj, indent .. "  ")
+        else
+            if already[obj] then
+                self:Print("%s = %s (already dumped)", prefix, toString(obj))
+                return
+            end
+            already[obj] = true
+            self:Print("%s = %s", prefix, tostring(obj))
+        end
+    end
+
+    dump(obj, name or "value", "")
 end
 
 function LVK:PostMacro()
