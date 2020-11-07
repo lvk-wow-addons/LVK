@@ -185,7 +185,6 @@ function LVK:SplitSlash(str)
         table.insert(result, current)
     end
 
-    self:Dump(result, "before")
     local index = 1
     while index < #result do
         if string.find(result[index], "|Hitem:") ~= nil then
@@ -204,7 +203,6 @@ function LVK:SplitSlash(str)
             index = index + 1
         end
     end
-    self:Dump(result, "after")
     return result
 end
 
@@ -213,6 +211,7 @@ function LVK:ExecuteSlash(str, frame)
 
     if #parts >= 1 then
         local name = string.upper(parts[1]):sub(1, 1) .. string.lower(parts[1]:sub(2, #parts[1]))
+
         local functionName = "Slash_" .. name
 
         local exceptFirst = {unpack(parts)}
