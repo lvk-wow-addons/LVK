@@ -412,3 +412,5 @@ end
 function LVK:Test()
     AutoMacros:InventoryChanged()
 end
+
+LVK:AnnounceAddon("LVK")
