@@ -16,6 +16,7 @@ LVK["ColorCodes"] = {
 LVK["_timers"] = {}
 LVK["_timerValue"] = 0
 LVK["_timerId"] = 0
+LVK["_status"] = {}
 
 function LVK:Debug(message)
     -- self:Print("|y|debug: " .. message)
@@ -23,6 +24,13 @@ end
 
 function LVK:Error(message)
     self:Print("|r|Error: " .. message)
+end
+
+function LVK:Status(key, value)
+    if (not LVK["_status"][key]) or (LVK["_status"][key] ~= value) then
+        LVK["_status"][key] = value
+        LVK:Debug("|y|" .. key .. "|<| = |g|" .. value .. "|<|")
+    end
 end
 
 function LVK:Colorize(msg, ...)
