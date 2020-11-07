@@ -37,6 +37,9 @@ function LVK:Colorize(msg, ...)
     if msg == nil then
         return "<nil>"
     end
+    if type(msg) ~= "string" then
+        msg = tostring(msg)
+    end
     local result = ""
     local i = 1
     local oldI = 0
