@@ -17,9 +17,12 @@ LVK["_timers"] = {}
 LVK["_timerValue"] = 0
 LVK["_timerId"] = 0
 LVK["_status"] = {}
+LVK["_debug"] = false
 
 function LVK:Debug(message)
-    -- self:Print("|y|debug: " .. message)
+    if LVK["_debug"] then
+        self:Print("|y|debug: " .. message)
+    end
 end
 
 function LVK:Error(message)
@@ -134,7 +137,9 @@ function LVK:FormatString(str)
 end
 
 function LVK:DebugDump(obj, name)
-    -- self:Dump(obj, self:Colorize("|y|DEBUG: |<|" .. (name or "value")))
+    if LVK["_debug"] then
+        self:Dump(obj, self:Colorize("|y|DEBUG: |<|" .. (name or "value")))
+    end
 end
 
 function LVK:GetItemString(itemLink)
@@ -233,6 +238,10 @@ function LVK:ExecuteSlash(str, frame)
 
         return false
     end
+end
+
+function LVK:SetDebug(onOff)
+    LVK["_debug"] = onOff
 end
 
 function LVK:ShowHelp(tbl, key)
