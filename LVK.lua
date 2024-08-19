@@ -18,6 +18,7 @@ LVK["_timerValue"] = 0
 LVK["_timerId"] = 0
 LVK["_status"] = {}
 LVK["_debug"] = false
+LVK["_next"] = {}
 
 function LVK:Debug(message)
     if LVK["_debug"] then
@@ -27,6 +28,21 @@ end
 
 function LVK:Error(message)
     self:Print("|r|Error: " .. message)
+end
+
+function LVK:OnNext(key, action)
+    if LVK["_next"][key] or false then
+        LVK["_next"][key] = false
+        if type(action) == "function" then
+            action()
+        else
+            LVK:Dump(action, key)
+        end
+    end
+end
+
+function LVK:TriggerNext(key)
+    LVK["_next"][key] = true
 end
 
 function LVK:Status(key, value)
@@ -96,7 +112,7 @@ function LVK:GetItemId(item)
 end
 
 function LVK:AnnounceAddon(addonId)
-    self:Print("[|y|" .. addonId .. "|<|] v|g|" .. GetAddOnMetadata(addonId, "version") .. "|<| loaded")
+    self:Print("[|y|" .. addonId .. "|<|] v|g|" .. C_AddOns.GetAddOnMetadata(addonId, "version") .. "|<| loaded")
 end
 
 function LVK:PreMacro()
@@ -433,3 +449,4 @@ function LVK:Test()
 end
 
 LVK:AnnounceAddon("LVK")
+RegisterStateDriver(ObjectiveTrackerFrame, "visibility", "[nocombat] show; hide")
