@@ -20,9 +20,9 @@ LVK["_status"] = {}
 LVK["_debug"] = false
 LVK["_next"] = {}
 
-function LVK:Debug(message)
+function LVK:Debug(message, ...)
     if LVK["_debug"] then
-        self:Print("|y|debug: " .. message)
+        self:Print("|y|debug: " .. LVK:Colorize(message, ...))
     end
 end
 
@@ -276,7 +276,7 @@ function LVK:ShowHelp(tbl, key)
     end
 end
 
-function LVK:Dump(obj, name)
+function LVK:Dump(obj, name, maxLevel)
     local already = {}
 
     local toString = function(value)
@@ -309,6 +309,13 @@ function LVK:Dump(obj, name)
 
             self:Print("%s = %s", prefix, toString(tbl))
             self:Print("%s{", indent:sub(1, #indent - 2))
+
+            if maxLevel and #indent >= maxLevel*2 then
+                self:Print("%s ...", indent:sub(1, #indent - 1))
+                self:Print("%s}", indent:sub(1, #indent - 2))
+                return
+            end
+
             local any = false
             for key, value in pairs(tbl) do
                 dump(value, toString(key), indent .. "  ")
@@ -357,74 +364,6 @@ function LVK:PostMacro()
     UIErrorsFrame:Show()
 end
 
-function LVK:AdvanceTimer(sinceLastUpdate)
-    self._timerValue = self._timerValue + sinceLastUpdate
-    while #self._timers > 0 and self._timerValue >= self._timers[1].n do
-        local timer = self._timers[1]
-        table.remove(self._timers, 1)
-
-        local timeToNext = timer.f()
-        if timeToNext and timeToNext > 0 then
-            timer.n = timer.n + timeToNext
-            table.insert(self._timers, timer)
-            table.sort(self._timers, function(a, b) return a.n < b.n end)
-        else
-            self:Debug("timer with id " .. timer.id .. " removed, returned " .. (timeToNext or "nil"))
-        end
-    end
-end
-
-function LVK:AddTimer(fn, timeToFirst)
-    self._timerId = self._timerId + 1
-    local timer = {
-        ["n"] = self._timerValue + timeToFirst,
-        ["f"] = fn,
-        ["id"] = self._timerId
-    }
-    table.insert(self._timers, timer)
-    table.sort(self._timers, function(a, b) return a.n < b.n end)
-
-    return timer.id
-end
-
-function LVK:RemoveTimer(timerId)
-    for k, v in pairs(self._timers) do
-        if v.id == timerId then
-            table.remove(self._timers, k)
-            return
-        end
-    end
-end
-
-function LVK:Retry(fn, timeToFirst, timeBetween)
-    return LVK:AddTimer(function()
-        if fn() then
-            return -1
-        else
-            return timeBetween
-        end
-    end, timeToFirst)
-end
-
-function LVK:Repeat(fn, times, timeToFirst, timeBetween)
-    local count = 0
-    return LVK:AddTimer(function()
-        count = count + 1
-        if count > times then
-            return -1
-        else
-            fn()
-            return timeBetween
-        end
-    end, timeToFirst)
-end
-
-function LVK:Delay(fn, amount)
-    return LVK:AddTimer(function()
-        fn()
-    end, amount)
-end
-
 function LVK:SplitLines(text)
     local lines = {}
     for line in text:gmatch("[^\r\n]+") do
@@ -434,10 +373,14 @@ function LVK:SplitLines(text)
 end
 
 function LVK:AssembleLines(lines)
+    return LVK:Join(lines, "\n")
+end
+
+function LVK:Join(lines, separator)
     local result = ""
     for k, v in ipairs(lines) do
         if result ~= "" then
-            result = result .. "\n"
+            result = result .. separator
         end
         result = result .. v
     end
@@ -449,4 +392,4 @@ function LVK:Test()
 end
 
 LVK:AnnounceAddon("LVK")
-RegisterStateDriver(ObjectiveTrackerFrame, "visibility", "[nocombat] show; hide")
+-- RegisterStateDriver(ObjectiveTrackerFrame, "visibility", "[nocombat] show; hide")

@@ -2,7 +2,7 @@
 ## Title: LVK
 ## Notes: 
 ## Author: Lasse Vågsæther Karlsen
-## Version: 9.0.0.1
+## Version: 11.0.2
 ## DefaultState: Enabled
 LVK.lua
-LVK_Frame.lua
+LVK_EventHandler.lua
