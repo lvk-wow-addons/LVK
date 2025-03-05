@@ -26,8 +26,8 @@ function LVK:Debug(message, ...)
     end
 end
 
-function LVK:Error(message)
-    self:Print("|r|Error: " .. message)
+function LVK:Error(message, ...)
+    self:Print("|r|Error:|<| " .. message, ...)
 end
 
 function LVK:OnNext(key, action)

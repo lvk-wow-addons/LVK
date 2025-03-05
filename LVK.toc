@@ -1,8 +1,8 @@
-## Interface: 100207,110000,110002
+## Interface: 110100
 ## Title: LVK
 ## Notes: 
 ## Author: Lasse Vågsæther Karlsen
-## Version: 11.0.2
+## Version: 11.1.0
 ## DefaultState: Enabled
 LVK.lua
 LVK_EventHandler.lua
